@@ -9,7 +9,7 @@
 
 # ## _Setup_ geral
 
-# In[21]:
+# In[2]:
 
 
 import pandas as pd
@@ -23,7 +23,7 @@ from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer, TfidfVectorizer
 
 
-# In[35]:
+# In[3]:
 
 
 # Algumas configurações para o matplotlib.
@@ -37,13 +37,13 @@ figsize(12, 8)
 sns.set()
 
 
-# In[23]:
+# In[20]:
 
 
-countries = pd.read_csv("countries.csv")
+countries = pd.read_csv("countries.csv", decimal = ",")
 
 
-# In[24]:
+# In[21]:
 
 
 new_column_names = [
@@ -58,7 +58,7 @@ countries.columns = new_column_names
 countries.head(5)
 
 
-# In[25]:
+# In[23]:
 
 
 countries['Pop_density']
@@ -72,7 +72,7 @@ countries['Pop_density']
 
 # ## Inicia sua análise a partir daqui
 
-# In[26]:
+# In[38]:
 
 
 novo_df = countries.copy()
@@ -80,27 +80,24 @@ string_to_float = ['Pop_density', 'Coastline_ratio', 'Net_migration', 'Infant_mo
        'Literacy', 'Phones_per_1000', 'Arable', 'Crops', 'Other', 'Climate',
        'Birthrate', 'Deathrate', 'Agriculture', 'Industry', 'Service']
 
-novo_df[string_to_float] = novo_df[string_to_float].replace({',': '.'}, regex=True).astype(float)
+#novo_df[string_to_float] = novo_df[string_to_float].replace({',': '.'}, regex=True)
 
 str_columns = novo_df.columns[novo_df.dtypes == object]
 
 novo_df[str_columns] = novo_df[str_columns].apply(lambda x: x.str.strip())
 
 
-# In[27]:
+# In[39]:
 
 
-discretizer = KBinsDiscretizer( n_bins=10, encode='ordinal', strategy='quantile')
-discretizer.fit(novo_df[['Pop_density']])
-pop_discretized = discretizer.transform(novo_df[['Pop_density']])
-discretizer.bin_edges_
+novo_df['Climate'] = novo_df['Climate'].fillna(novo_df['Climate'].mean())
 
 
 # ## Questão 1
 # 
 # Quais são as regiões (variável `Region`) presentes no _data set_? Retorne uma lista com as regiões únicas do _data set_ com os espaços à frente e atrás da string removidos (mas mantenha pontuação: ponto, hífen etc) e ordenadas em ordem alfabética.
 
-# In[28]:
+# In[40]:
 
 
 def q1():
@@ -108,14 +105,13 @@ def q1():
     a = list(novo_df['Region'].unique())
     a.sort()
     return(a)
-q1()
 
 
 # ## Questão 2
 # 
 # Discretizando a variável `Pop_density` em 10 intervalos com `KBinsDiscretizer`, seguindo o encode `ordinal` e estratégia `quantile`, quantos países se encontram acima do 90º percentil? Responda como um único escalar inteiro.
 
-# In[29]:
+# In[28]:
 
 
 def q2():
@@ -124,29 +120,21 @@ def q2():
     pop_discretized = discretizer.transform(novo_df[['Pop_density']])
     quantile_90 = np.quantile(pop_discretized,0.9)
     return int(sum(pop_discretized > quantile_90))
-q2()
 
 
 # # Questão 3
 # 
 # Se codificarmos as variáveis `Region` e `Climate` usando _one-hot encoding_, quantos novos atributos seriam criados? Responda como um único escalar.
 
-# In[30]:
-
-
-novo_df['Climate'] = novo_df['Climate'].fillna(novo_df['Climate'].mean())
-
-
-# In[31]:
+# In[43]:
 
 
 def q3():
-
+    novo_df['Climate'] = novo_df['Climate'].fillna(novo_df['Climate'].mean())
     one_hot_encoder = OneHotEncoder(sparse=False, dtype=np.int)
     one_hot_encoder.fit(novo_df[['Region', 'Climate']])
     onehotencoded = one_hot_encoder.transform(novo_df[['Region', 'Climate']])
     return int(onehotencoded.shape[1])
-q3()
 
 
 # ## Questão 4
@@ -158,7 +146,7 @@ q3()
 # 
 # Após aplicado o _pipeline_ descrito acima aos dados (somente nas variáveis dos tipos especificados), aplique o mesmo _pipeline_ (ou `ColumnTransformer`) ao dado abaixo. Qual o valor da variável `Arable` após o _pipeline_? Responda como um único float arredondado para três casas decimais.
 
-# In[32]:
+# In[44]:
 
 
 test_country = [
@@ -172,7 +160,7 @@ test_country = [
 ]
 
 
-# In[33]:
+# In[46]:
 
 
 def q4():
@@ -190,7 +178,6 @@ def q4():
     
     # Retornando um float com a posição referente a variável 'Arable'
     return float(np.round((pipeline_test_country[0,9]),3))
-q4()
 
 
 # ## Questão 5
@@ -203,19 +190,19 @@ q4()
 # 
 # Você deveria remover da análise as observações consideradas _outliers_ segundo esse método? Responda como uma tupla de três elementos `(outliers_abaixo, outliers_acima, removeria?)` ((int, int, bool)).
 
-# In[34]:
+# In[47]:
 
 
-sns.boxplot(novo_df['Net_migration'], orient="vertical");
+#sns.boxplot(novo_df['Net_migration'], orient="vertical");
 
 
-# In[15]:
+# In[48]:
 
 
-sns.distplot(novo_df['Net_migration'])
+#sns.distplot(novo_df['Net_migration'])
 
 
-# In[36]:
+# In[49]:
 
 
 def q5():
@@ -227,7 +214,6 @@ def q5():
     outliers_abaixo = sum(novo_df['Net_migration'] < limites_iqr[0])
     boolean = False
     return ((outliers_abaixo, outliers_acima, boolean))
-q5()
 
 
 # ## Questão 6
@@ -243,28 +229,27 @@ q5()
 # 
 # Aplique `CountVectorizer` ao _data set_ `newsgroups` e descubra o número de vezes que a palavra _phone_ aparece no corpus. Responda como um único escalar.
 
-# In[17]:
+# In[50]:
 
 
 categorias = ['sci.electronics', 'comp.graphics', 'rec.motorcycles']
 newsgroups = fetch_20newsgroups(subset="train", categories=categorias, shuffle=True, random_state=42)
 
 
-# In[18]:
+# In[51]:
 
 
 def q6():
     count_vectorizer = CountVectorizer()
     ng_counts = count_vectorizer.fit_transform(newsgroups.data)
     return int(ng_counts[:,count_vectorizer.vocabulary_['phone']].sum())
-q6()
 
 
 # ## Questão 7
 # 
 # Aplique `TfidfVectorizer` ao _data set_ `newsgroups` e descubra o TF-IDF da palavra _phone_. Responda como um único escalar arredondado para três casas decimais.
 
-# In[19]:
+# In[52]:
 
 
 def q7():
@@ -272,7 +257,6 @@ def q7():
     tfidf_vectorizer.fit(newsgroups.data)
     ng_tfidf_vectorized = tfidf_vectorizer.transform(newsgroups.data)
     return float(np.round(ng_tfidf_vectorized[:, tfidf_vectorizer.vocabulary_['phone']].sum(),3))
-q7()
 
 
 # In[ ]:
